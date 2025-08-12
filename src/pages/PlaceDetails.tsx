@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import api from '@/lib/api';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import MapView from '@/components/common/MapView';
 import 'leaflet/dist/leaflet.css';
 
 export default function PlaceDetails() {
@@ -74,12 +74,7 @@ export default function PlaceDetails() {
           </div>
         </div>
         <div className="rounded-xl border overflow-hidden h-80">
-          <MapContainer center={[coords.lat, coords.lng]} zoom={14} style={{ height: '100%', width: '100%' }}>
-            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-            <Marker position={[coords.lat, coords.lng]}>
-              <Popup>{place.name}</Popup>
-            </Marker>
-          </MapContainer>
+          <MapView center={[coords.lat, coords.lng]} label={place.name} className="h-80 w-full" />
         </div>
       </div>
     </div>
