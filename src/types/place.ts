@@ -1,0 +1,52 @@
+export interface Place {
+  _id: string;
+  name: string;
+  address: string;
+  category: string;
+  time: string;
+  likes: number;
+  dislikes: number;
+  imageUrl?: string;
+}
+
+export interface PlacesResponse {
+  success: boolean;
+  places: Place[];
+}
+
+export interface PlaceResponse {
+  success: boolean;
+  place: Place;
+}
+
+export interface CreatePlaceRequest {
+  name: string;
+  address: string;
+  category: string;
+  imageUrl?: string;
+}
+
+export interface UpdatePlaceRequest {
+  name?: string;
+  address?: string;
+  category?: string;
+  imageUrl?: string;
+}
+
+export interface PlaceFilters {
+  category?: string;
+  search?: string;
+}
+
+// Place categories
+export const PLACE_CATEGORIES = [
+  'Coffee Shop',
+  'Restaurant',
+  'Bar',
+  'Fast Food',
+  'Dessert',
+  'Bakery',
+  'Other'
+] as const;
+
+export type PlaceCategory = typeof PLACE_CATEGORIES[number];

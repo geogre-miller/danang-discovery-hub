@@ -6,7 +6,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 
 const schema = z.object({
-  username: z.string().min(2),
+  name: z.string().min(2),
   email: z.string().email(),
   password: z.string().min(6)
 });
@@ -20,7 +20,7 @@ export default function Register() {
 
   const onSubmit = async (vals: FormVals) => {
     try {
-      await doRegister(vals.username, vals.email, vals.password);
+      await doRegister({ name: vals.name, email: vals.email, password: vals.password });
       nav('/');
     } catch (e: any) {
       alert(e?.response?.data?.message || 'Registration failed');
@@ -36,9 +36,9 @@ export default function Register() {
       <h1 className="font-display text-3xl mb-6">Create your account</h1>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
-          <label className="block text-sm mb-1">Username</label>
-          <input className="w-full rounded-md border px-3 py-2" placeholder="Your name" {...register('username')} />
-          {errors.username && <p className="text-destructive text-sm mt-1">{errors.username.message}</p>}
+          <label className="block text-sm mb-1">Name</label>
+          <input className="w-full rounded-md border px-3 py-2" placeholder="Your name" {...register('name')} />
+          {errors.name && <p className="text-destructive text-sm mt-1">{errors.name.message}</p>}
         </div>
         <div>
           <label className="block text-sm mb-1">Email</label>

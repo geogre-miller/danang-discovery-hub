@@ -1,18 +1,43 @@
 import { motion } from 'framer-motion';
-import { Heart, MapPin, Star } from 'lucide-react';
+import { Heart, MapPin, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useLikePlace, useDislikePlace } from '@/hooks/use-places';
+import type { Place } from '@/types/place';
 
-export type Place = {
-  _id: string;
-  name: string;
-  address: string;
-  images?: string[];
-  rating?: number;
-  category?: string;
-};
+export default function PlaceCard({ 
+  place, 
+  onFavoriteToggle, 
+  isFavorite 
+}: { 
+  place: Place; 
+  onFavoriteToggle?: (id: string) => void; 
+  isFavorite?: boolean; 
+}) {
+  const likePlace = useLikePlace();
+  const dislikePlace = useDislikePlace();
+  
+  const img = place.imageUrl || '/placeholder.svg';
+  
+  const handleLike = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      await likePlace.mutateAsync(place._id);
+    } catch (error) {
+      // Error is handled in the mutation
+    }
+  };
 
-export default function PlaceCard({ place, onFavoriteToggle, isFavorite }: { place: Place; onFavoriteToggle?: (id: string) => void; isFavorite?: boolean; }) {
-  const img = place.images?.[0] || '/placeholder.svg';
+  const handleDislike = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      await dislikePlace.mutateAsync(place._id);
+    } catch (error) {
+      // Error is handled in the mutation
+    }
+  };
+
   return (
     <motion.article
       layout
@@ -27,9 +52,11 @@ export default function PlaceCard({ place, onFavoriteToggle, isFavorite }: { pla
       </Link>
       <div className="p-4 space-y-2">
         <div className="flex items-start justify-between gap-2">
-          <div>
+          <div className="flex-1">
             <h3 className="text-lg font-semibold leading-tight">{place.name}</h3>
-            <p className="text-sm text-muted-foreground flex items-center gap-1"><MapPin size={16} /> {place.address}</p>
+            <p className="text-sm text-muted-foreground flex items-center gap-1">
+              <MapPin size={16} /> {place.address}
+            </p>
           </div>
           <button
             onClick={() => onFavoriteToggle?.(place._id)}
@@ -39,11 +66,37 @@ export default function PlaceCard({ place, onFavoriteToggle, isFavorite }: { pla
             <Heart size={18} fill={isFavorite ? 'currentColor' : 'none'} />
           </button>
         </div>
-        <div className="flex items-center gap-1 text-amber-500">
-          <Star size={16} />
-          <span className="text-sm">{place.rating ?? 'No rating'}</span>
+        
+        <div className="flex items-center justify-between">
+          <div className="text-xs text-muted-foreground bg-secondary px-2 py-1 rounded-full">
+            {place.category}
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleLike}
+              disabled={likePlace.isPending}
+              className="flex items-center gap-1 text-sm text-green-600 hover:text-green-700 disabled:opacity-50"
+            >
+              <ThumbsUp size={16} />
+              <span>{place.likes}</span>
+            </button>
+            <button
+              onClick={handleDislike}
+              disabled={dislikePlace.isPending}
+              className="flex items-center gap-1 text-sm text-red-600 hover:text-red-700 disabled:opacity-50"
+            >
+              <ThumbsDown size={16} />
+              <span>{place.dislikes}</span>
+            </button>
+          </div>
         </div>
-        <div className="text-xs text-muted-foreground">{place.category}</div>
+        
+        {place.time && (
+          <div className="text-xs text-muted-foreground">
+            Hours: {place.time}
+          </div>
+        )}
       </div>
     </motion.article>
   );

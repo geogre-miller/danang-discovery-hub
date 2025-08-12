@@ -19,7 +19,7 @@ export default function Login() {
 
   const onSubmit = async (vals: FormVals) => {
     try {
-      await login(vals.email, vals.password);
+      await login({ email: vals.email, password: vals.password });
       nav('/');
     } catch (e: any) {
       alert(e?.response?.data?.message || 'Login failed');
