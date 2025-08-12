@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import api from '@/lib/api';
-import PlaceCard, { Place } from '@/components/common/PlaceCard';
+import PlaceCard from '@/components/common/PlaceCard';
+import { Place } from '@/types/place';
 
 export default function Favorites() {
   const [places, setPlaces] = useState<Place[]>([]);
