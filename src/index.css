@@ -121,12 +121,11 @@ All colors MUST be HSL.
     transform-origin: bottom right;
     transition: transform 300ms ease;
   }
-  .story-link:hover::after {
-    transform: scaleX(1);
-    transform-origin: bottom left;
-  }
   .hover-scale {
-    @apply transition-transform duration-200 hover:scale-105;
+    @apply transition-transform duration-200;
+  }
+  .hover-scale:hover {
+    transform: scale(1.05);
   }
   .pulse {
     animation: pulse 2s cubic-bezier(0.4,0,0.6,1) infinite;
