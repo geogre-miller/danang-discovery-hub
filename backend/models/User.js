@@ -28,6 +28,12 @@ const UserSchema = new mongoose.Schema({
   avatar: {
     type: String,
   },
+  favorites: [
+    {
+      place: { type: mongoose.Schema.Types.ObjectId, ref: "Place", required: true },
+      addedAt: { type: Date, default: Date.now },
+    },
+  ],
   role: {
     type: String,
     enum: ["user", "admin"],

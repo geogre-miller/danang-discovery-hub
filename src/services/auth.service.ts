@@ -48,5 +48,29 @@ export const authService = {
     localStorage.removeItem('ddh_token');
     localStorage.removeItem('ddh_refresh_token');
     localStorage.removeItem('ddh_user');
+  },
+
+  // Update profile
+  async updateProfile(profileData: { name?: string; avatar?: string }): Promise<User> {
+    const response = await api.put('/api/auth/profile', profileData);
+    return response.data.user;
+  },
+
+  // Add to favorites
+  async addToFavorites(placeId: string): Promise<any> {
+    const response = await api.post(`/api/auth/favorites/${placeId}`);
+    return response.data;
+  },
+
+  // Remove from favorites
+  async removeFromFavorites(placeId: string): Promise<any> {
+    const response = await api.delete(`/api/auth/favorites/${placeId}`);
+    return response.data;
+  },
+
+  // Get favorites
+  async getFavorites(): Promise<any> {
+    const response = await api.get('/api/auth/favorites');
+    return response.data;
   }
 };

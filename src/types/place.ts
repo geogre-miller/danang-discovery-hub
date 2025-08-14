@@ -7,6 +7,8 @@ export interface Place {
   likes: number;
   dislikes: number;
   imageUrl?: string;
+  userLiked?: boolean;
+  userDisliked?: boolean;
 }
 
 export interface PlacesResponse {

@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { User, Mail, Shield, Calendar } from 'lucide-react';
+<<<<<<< HEAD
 
 export default function Profile() {
   const { user, refreshUser } = useAuth();
@@ -15,6 +16,20 @@ export default function Profile() {
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
+=======
+import { useToast } from '@/hooks/use-toast';
+
+export default function Profile() {
+  const { user, updateProfile, refreshUser } = useAuth();
+  const { toast } = useToast();
+  const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    name: user?.name || '',
+    email: user?.email || '',
+    currentPassword: '',
+    newPassword: '',
+>>>>>>> productsDetail
   });
 
   if (!user) {
@@ -38,17 +53,80 @@ export default function Profile() {
   };
 
   const handleSave = async () => {
+<<<<<<< HEAD
     // TODO: Implement profile update API call
     console.log('Saving profile:', formData);
     setIsEditing(false);
     // await updateProfile(formData);
     // await refreshUser();
+=======
+    try {
+      setIsLoading(true);
+      
+      // Prepare the update data - only include fields that are not empty
+      const updateData: any = {};
+      
+      if (formData.name.trim() !== user.name) {
+        updateData.name = formData.name.trim();
+      }
+      
+      if (formData.email.trim() !== user.email) {
+        updateData.email = formData.email.trim();
+      }
+      
+      if (formData.newPassword.trim()) {
+        if (!formData.currentPassword.trim()) {
+          toast({
+            title: 'Error',
+            description: 'Current password is required to change password',
+            variant: 'destructive',
+          });
+          return;
+        }
+        updateData.currentPassword = formData.currentPassword;
+        updateData.newPassword = formData.newPassword;
+      }
+      
+      if (Object.keys(updateData).length === 0) {
+        setIsEditing(false);
+        return;
+      }
+      
+      await updateProfile(updateData);
+      setIsEditing(false);
+      
+      // Clear password fields after successful update
+      setFormData(prev => ({
+        ...prev,
+        currentPassword: '',
+        newPassword: '',
+      }));
+      
+      toast({
+        title: 'Success',
+        description: 'Profile updated successfully!',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to update profile',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+>>>>>>> productsDetail
   };
 
   const handleCancel = () => {
     setFormData({
       name: user.name,
       email: user.email,
+<<<<<<< HEAD
+=======
+      currentPassword: '',
+      newPassword: '',
+>>>>>>> productsDetail
     });
     setIsEditing(false);
   };
@@ -130,6 +208,41 @@ export default function Profile() {
                 )}
               </div>
 
+<<<<<<< HEAD
+=======
+              {isEditing && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="currentPassword">Current Password</Label>
+                    <Input
+                      id="currentPassword"
+                      type="password"
+                      value={formData.currentPassword}
+                      onChange={(e) => setFormData({ ...formData, currentPassword: e.target.value })}
+                      placeholder="Enter current password (required for changes)"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Required to save any changes to your profile
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="newPassword">New Password</Label>
+                    <Input
+                      id="newPassword"
+                      type="password"
+                      value={formData.newPassword}
+                      onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
+                      placeholder="Enter new password (optional)"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Leave blank to keep current password
+                    </p>
+                  </div>
+                </>
+              )}
+
+>>>>>>> productsDetail
               <div className="space-y-2">
                 <Label>Account Role</Label>
                 <div className="flex items-center gap-2 p-2 bg-muted rounded">
@@ -153,10 +266,17 @@ export default function Profile() {
             <div className="flex gap-3 pt-4">
               {isEditing ? (
                 <>
+<<<<<<< HEAD
                   <Button onClick={handleSave}>
                     Save Changes
                   </Button>
                   <Button variant="outline" onClick={handleCancel}>
+=======
+                  <Button onClick={handleSave} disabled={isLoading}>
+                    {isLoading ? 'Saving...' : 'Save Changes'}
+                  </Button>
+                  <Button variant="outline" onClick={handleCancel} disabled={isLoading}>
+>>>>>>> productsDetail
                     Cancel
                   </Button>
                 </>
@@ -177,7 +297,11 @@ export default function Profile() {
           <CardContent>
             <div className="grid grid-cols-2 gap-4 text-center">
               <div className="p-4 bg-muted rounded-lg">
+<<<<<<< HEAD
                 <div className="text-2xl font-bold text-primary">0</div>
+=======
+                <div className="text-2xl font-bold text-primary">{user.favorites?.length || 0}</div>
+>>>>>>> productsDetail
                 <p className="text-sm text-muted-foreground">Places Favorited</p>
               </div>
               <div className="p-4 bg-muted rounded-lg">

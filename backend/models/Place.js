@@ -8,6 +8,8 @@ const placeSchema = new mongoose.Schema({
   likes: { type: Number, default: 0 },
   dislikes: { type: Number, default: 0 },
   imageUrl: { type: String },
+  likedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  dislikedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
 }, {
   timestamps: true, // This adds createdAt and updatedAt fields
 });

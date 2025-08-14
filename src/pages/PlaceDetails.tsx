@@ -1,12 +1,14 @@
-import { useMemo } from 'react';
+import { useMemo, Suspense, lazy } from 'react';
 import { useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { usePlace, useLikePlace, useDislikePlace } from '@/hooks/use-places';
-import MapView from '@/components/common/MapView';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, Clock, ThumbsUp, ThumbsDown } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
+
+// Lazy load the MapView component
+const MapView = lazy(() => import('@/components/common/MapView'));
 
 export default function PlaceDetails() {
   const { id } = useParams<{ id: string }>();
@@ -161,7 +163,13 @@ export default function PlaceDetails() {
         </div>
         
         <div className="rounded-xl border overflow-hidden h-80">
-          <MapView center={[coords.lat, coords.lng]} label={place.name} className="h-80 w-full" />
+          <Suspense fallback={
+            <div className="flex items-center justify-center h-80 w-full bg-muted">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          }>
+            <MapView center={[coords.lat, coords.lng]} label={place.name} className="h-80 w-full" />
+          </Suspense>
         </div>
       </div>
     </div>
