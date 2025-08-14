@@ -1,13 +1,7 @@
 import { Helmet } from 'react-helmet-async';
-<<<<<<< HEAD
-import api from '@/lib/api';
-import PlaceCard from '@/components/common/PlaceCard';
-import { Place } from '@/types/place';
-=======
 import { useAuth } from '@/context/AuthContext';
 import { useFavorites } from '@/hooks/use-favorites';
 import PlaceCard from '@/components/common/PlaceCard';
->>>>>>> productsDetail
 
 export default function Favorites() {
   const { user } = useAuth();

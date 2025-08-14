@@ -4,18 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
-<<<<<<< HEAD
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-import PlaceDetails from "./pages/PlaceDetails";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import Favorites from "./pages/Favorites";
-import Profile from "./pages/Profile";
-import AdminDashboard from "./pages/AdminDashboard";
-=======
 import { lazy, Suspense } from "react";
->>>>>>> productsDetail
 import Header from "@/components/layout/Header";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { AuthProvider } from "@/context/AuthContext";
@@ -57,41 +46,6 @@ const App = () => (
           <BrowserRouter>
             <ScrollToTop />
             <Header />
-<<<<<<< HEAD
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/places/:id" element={<PlaceDetails />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route
-                path="/favorites"
-                element={
-                  <ProtectedRoute>
-                    <Favorites />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/profile"
-                element={
-                  <ProtectedRoute>
-                    <Profile />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin"
-                element={
-                  <ProtectedRoute adminOnly showNotFoundForUnauthorized>
-                    <AdminDashboard />
-                  </ProtectedRoute>
-                }
-              />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="/404" element={<NotFound />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-=======
             <Suspense fallback={<PageLoader />}>
               <Routes>
                 <Route path="/" element={<Index />} />
@@ -117,7 +71,7 @@ const App = () => (
                 <Route
                   path="/admin"
                   element={
-                    <ProtectedRoute adminOnly>
+                    <ProtectedRoute adminOnly showNotFoundForUnauthorized>
                       <AdminDashboard />
                     </ProtectedRoute>
                   }
@@ -127,7 +81,6 @@ const App = () => (
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
->>>>>>> productsDetail
           </BrowserRouter>
         </TooltipProvider>
       </AuthProvider>
