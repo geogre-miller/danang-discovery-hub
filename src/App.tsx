@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
+<<<<<<< Updated upstream
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import PlaceDetails from "./pages/PlaceDetails";
@@ -11,12 +12,39 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Favorites from "./pages/Favorites";
 import AdminDashboard from "./pages/AdminDashboard";
+=======
+import { lazy, Suspense } from "react";
+>>>>>>> Stashed changes
 import Header from "@/components/layout/Header";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { AuthProvider } from "@/context/AuthContext";
 import ScrollToTop from "@/components/common/ScrollToTop";
 
-const queryClient = new QueryClient();
+// Lazy load pages for code splitting
+const Index = lazy(() => import("./pages/Index"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const PlaceDetails = lazy(() => import("./pages/PlaceDetails"));
+const Login = lazy(() => import("./pages/Login"));
+const Register = lazy(() => import("./pages/Register"));
+const Favorites = lazy(() => import("./pages/Favorites"));
+const Profile = lazy(() => import("./pages/Profile"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+    },
+  },
+});
+
+// Loading component for lazy routes
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-[50vh]">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+  </div>
+);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -28,6 +56,7 @@ const App = () => (
           <BrowserRouter>
             <ScrollToTop />
             <Header />
+<<<<<<< Updated upstream
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/places/:id" element={<PlaceDetails />} />
@@ -38,6 +67,43 @@ const App = () => (
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
+=======
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/places/:id" element={<PlaceDetails />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route
+                  path="/favorites"
+                  element={
+                    <ProtectedRoute>
+                      <Favorites />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/profile"
+                  element={
+                    <ProtectedRoute>
+                      <Profile />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin"
+                  element={
+                    <ProtectedRoute adminOnly showNotFoundForUnauthorized>
+                      <AdminDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="/404" element={<NotFound />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+>>>>>>> Stashed changes
           </BrowserRouter>
         </TooltipProvider>
       </AuthProvider>

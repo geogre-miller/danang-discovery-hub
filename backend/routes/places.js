@@ -1,17 +1,58 @@
 const express = require("express");
 const Place = require("../models/Place");
+const { authenticate } = require("../middleware/auth");
 const { p } = require("framer-motion/client");
 
 const router = express.Router();
+
+// Optional auth middleware - doesn't fail if no token
+const optionalAuth = (req, res, next) => {
+  const token = req.header('Authorization');
+  if (!token || !token.startsWith('Bearer ')) {
+    return next();
+  }
+
+  try {
+    const jwt = require('jsonwebtoken');
+    const actualToken = token.replace('Bearer ', '');
+    const decoded = jwt.verify(actualToken, process.env.JWT_SECRET);
+    req.user = decoded.user;
+  } catch (error) {
+    // Continue without user if token is invalid
+  }
+  
+  next();
+};
+
 // @route   GET api/places
-// @desc    Get all places
+// @desc    Get all places with user interaction status
 // @access  Public
-router.get("/", async (req, res) => {
+router.get("/", optionalAuth, async (req, res) => {
   try {
     const places = await Place.find();
+    
+    // If user is authenticated, include their interaction status
+    const placesWithUserStatus = places.map(place => {
+      const placeObj = place.toObject();
+      
+      if (req.user) {
+        placeObj.userLiked = place.likedBy.includes(req.user.id);
+        placeObj.userDisliked = place.dislikedBy.includes(req.user.id);
+      } else {
+        placeObj.userLiked = false;
+        placeObj.userDisliked = false;
+      }
+      
+      // Don't expose the likedBy and dislikedBy arrays to frontend
+      delete placeObj.likedBy;
+      delete placeObj.dislikedBy;
+      
+      return placeObj;
+    });
+    
     res.json({
       success: true,
-      places,
+      places: placesWithUserStatus,
     });
   } catch (error) {
     console.error(error.message);
@@ -149,14 +190,13 @@ router.delete("/:id", async (req, res) => {
 
 // @route   POST api/places/:id/like
 // @desc    Like a place
-// @access  Public
-router.post("/:id/like", async (req, res) => {
+// @access  Private
+router.post("/:id/like", authenticate, async (req, res) => {
   try {
-    const place = await Place.findByIdAndUpdate(
-      req.params.id,
-      { $inc: { likes: 1 } },
-      { new: true }
-    );
+    const userId = req.user.id;
+    const placeId = req.params.id;
+
+    const place = await Place.findById(placeId);
 
     if (!place) {
       return res.status(404).json({
@@ -165,9 +205,33 @@ router.post("/:id/like", async (req, res) => {
       });
     }
 
+    // Check if user already liked this place
+    const alreadyLiked = place.likedBy.includes(userId);
+    const alreadyDisliked = place.dislikedBy.includes(userId);
+
+    if (alreadyLiked) {
+      // User already liked, so unlike it
+      place.likedBy = place.likedBy.filter(id => !id.equals(userId));
+      place.likes = Math.max(0, place.likes - 1);
+    } else {
+      // If user had disliked, remove dislike first
+      if (alreadyDisliked) {
+        place.dislikedBy = place.dislikedBy.filter(id => !id.equals(userId));
+        place.dislikes = Math.max(0, place.dislikes - 1);
+      }
+      
+      // Add like
+      place.likedBy.push(userId);
+      place.likes += 1;
+    }
+
+    await place.save();
+
     res.json({
       success: true,
       place,
+      userLiked: !alreadyLiked,
+      userDisliked: false,
     });
   } catch (error) {
     console.error(error.message);
@@ -180,14 +244,13 @@ router.post("/:id/like", async (req, res) => {
 
 // @route   POST api/places/:id/dislike
 // @desc    Dislike a place
-// @access  Public
-router.post("/:id/dislike", async (req, res) => {
+// @access  Private
+router.post("/:id/dislike", authenticate, async (req, res) => {
   try {
-    const place = await Place.findByIdAndUpdate(
-      req.params.id,
-      { $inc: { dislikes: 1 } },
-      { new: true }
-    );
+    const userId = req.user.id;
+    const placeId = req.params.id;
+
+    const place = await Place.findById(placeId);
 
     if (!place) {
       return res.status(404).json({
@@ -196,9 +259,33 @@ router.post("/:id/dislike", async (req, res) => {
       });
     }
 
+    // Check if user already disliked this place
+    const alreadyDisliked = place.dislikedBy.includes(userId);
+    const alreadyLiked = place.likedBy.includes(userId);
+
+    if (alreadyDisliked) {
+      // User already disliked, so remove dislike
+      place.dislikedBy = place.dislikedBy.filter(id => !id.equals(userId));
+      place.dislikes = Math.max(0, place.dislikes - 1);
+    } else {
+      // If user had liked, remove like first
+      if (alreadyLiked) {
+        place.likedBy = place.likedBy.filter(id => !id.equals(userId));
+        place.likes = Math.max(0, place.likes - 1);
+      }
+      
+      // Add dislike
+      place.dislikedBy.push(userId);
+      place.dislikes += 1;
+    }
+
+    await place.save();
+
     res.json({
       success: true,
       place,
+      userLiked: false,
+      userDisliked: !alreadyDisliked,
     });
   } catch (error) {
     console.error(error.message);

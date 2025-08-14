@@ -4,11 +4,9 @@ import { motion } from 'framer-motion';
 import { Search } from 'lucide-react';
 import { usePlaces } from '@/hooks/use-places';
 import PlaceCard from '@/components/common/PlaceCard';
-import { useToast } from '@/hooks/use-toast';
 import { PLACE_CATEGORIES } from '@/types/place';
 
 export default function Home() {
-  const { toast } = useToast();
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   
@@ -17,26 +15,9 @@ export default function Home() {
     category: selectedCategory || undefined
   });
 
-  const [favorites, setFavorites] = useState<string[]>(() => {
-    try { 
-      return JSON.parse(localStorage.getItem('ddh_favorites') || '[]'); 
-    } catch { 
-      return []; 
-    }
-  });
-
   const onSubmitSearch = (e: React.FormEvent) => {
     e.preventDefault();
     // The search will be handled by React Query automatically due to dependency change
-  };
-
-  const toggleFav = (id: string) => {
-    setFavorites((prev) => {
-      const next = prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id];
-      localStorage.setItem('ddh_favorites', JSON.stringify(next));
-      toast({ title: prev.includes(id) ? 'Removed from favorites' : 'Saved to favorites' });
-      return next;
-    });
   };
 
   const heroSubtitle = useMemo(() => 'Cafes, restaurants, and hidden gems in Da Nang', []);
@@ -117,12 +98,7 @@ export default function Home() {
         ) : places && places.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {places.map((place) => (
-              <PlaceCard 
-                key={place._id} 
-                place={place} 
-                onFavoriteToggle={toggleFav} 
-                isFavorite={favorites.includes(place._id)} 
-              />
+              <PlaceCard key={place._id} place={place} />
             ))}
           </div>
         ) : (

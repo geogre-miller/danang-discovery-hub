@@ -10,6 +10,7 @@ type AuthContextType = {
   register: (userData: RegisterRequest) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
+  updateProfile: (profileData: { name?: string; email?: string; currentPassword?: string; newPassword?: string }) => Promise<User>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -110,6 +111,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  // Update user profile
+  const updateProfile = async (profileData: { name?: string; email?: string; currentPassword?: string; newPassword?: string }) => {
+    try {
+      const updatedUser = await authService.updateProfile(profileData);
+      setUser(updatedUser);
+      localStorage.setItem('ddh_user', JSON.stringify(updatedUser));
+      return updatedUser;
+    } catch (error) {
+      console.error('Failed to update profile:', error);
+      throw error;
+    }
+  };
+
   const value = useMemo(() => ({
     user,
     token,
@@ -117,7 +131,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     login,
     register,
     logout,
-    refreshUser
+    refreshUser,
+    updateProfile
   }), [user, token, loading]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -7,6 +7,7 @@ export interface User {
   googleId?: string;
   facebookId?: string;
   instagramId?: string;
+  favorites?: any[];
   createdAt: string;
 }
 

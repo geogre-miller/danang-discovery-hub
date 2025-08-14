@@ -357,4 +357,160 @@ router.put("/user/role/:userId", authenticate, isAdmin, async (req, res) => {
   }
 });
 
+// @route   PUT api/auth/profile
+// @desc    Update user profile
+// @access  Private
+router.put("/profile", authenticate, async (req, res) => {
+  try {
+    const { name, avatar } = req.body;
+    
+    const updateFields = {};
+    if (name) updateFields.name = name;
+    if (avatar) updateFields.avatar = avatar;
+    
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { $set: updateFields },
+      { new: true }
+    ).select('-password');
+    
+    res.json({
+      success: true,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        avatar: user.avatar,
+      },
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// @route   POST api/auth/favorites/:placeId
+// @desc    Add place to favorites (toggle behavior)
+// @access  Private
+router.post("/favorites/:placeId", authenticate, async (req, res) => {
+  try {
+    const { placeId } = req.params;    
+    // Validate ObjectId format
+    const mongoose = require('mongoose');
+    if (!mongoose.Types.ObjectId.isValid(placeId)) {
+      console.log("Invalid place ID format:", placeId);
+      return res.status(400).json({ message: "Invalid place ID format" });
+    }
+    
+    // Validate place exists
+    const Place = require("../models/Place");
+    const placeExists = await Place.findById(placeId);
+    if (!placeExists) {
+      console.log("Place not found:", placeId);
+      return res.status(400).json({ message: "Place not found" });
+    }
+    
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      console.log("User not found:", req.user.id);
+      return res.status(400).json({ message: "User not found" });
+    }
+    
+    // Check if place is already in favorites
+    const existingFavoriteIndex = user.favorites.findIndex(
+      fav => fav.place.toString() === placeId
+    );
+    
+    if (existingFavoriteIndex !== -1) {
+      // Remove from favorites (toggle off)
+      user.favorites.splice(existingFavoriteIndex, 1);
+      await user.save();
+      
+      return res.json({
+        success: true,
+        message: "Place removed from favorites",
+        favorites: user.favorites,
+        action: 'removed'
+      });
+    } else {
+      // Add to favorites (toggle on)
+      user.favorites.push({ place: placeId });
+      await user.save();
+      
+      return res.json({
+        success: true,
+        message: "Place added to favorites",
+        favorites: user.favorites,
+        action: 'added'
+      });
+    }
+  } catch (err) {
+    console.error("Error in favorites toggle:", err.message);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// @route   DELETE api/auth/favorites/:placeId
+// @desc    Remove place from favorites
+// @access  Private
+router.delete("/favorites/:placeId", authenticate, async (req, res) => {
+  try {
+    const { placeId } = req.params;
+    
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(400).json({ message: "User not found" });
+    }
+    
+    // Remove from favorites
+    const initialLength = user.favorites.length;
+    user.favorites = user.favorites.filter(
+      fav => fav.place.toString() !== placeId
+    );
+    
+    if (user.favorites.length === initialLength) {
+      return res.json({
+        success: true,
+        message: "Place was not in favorites",
+        favorites: user.favorites,
+      });
+    }
+    
+    await user.save();
+    
+    res.json({
+      success: true,
+      message: "Place removed from favorites",
+      favorites: user.favorites,
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// @route   GET api/auth/favorites
+// @desc    Get user's favorite places
+// @access  Private
+router.get("/favorites", authenticate, async (req, res) => {
+  try {
+    
+    const user = await User.findById(req.user.id)
+      .populate('favorites.place')
+      .select('-password');
+    
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+        
+    res.json({
+      success: true,
+      favorites: user.favorites,
+    });
+  } catch (err) {
+    console.error("Error fetching favorites:", err.message);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 module.exports = router;
