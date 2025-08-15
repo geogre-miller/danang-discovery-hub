@@ -10,6 +10,7 @@ import { MapPin, Clock, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { getBestAddress } from '@/lib/address-utils';
 import { SimpleMapTilerView } from '@/components/common/MapTilerView';
+import MapView from '@/components/common/MapView';
 
 // Note: No need to import leaflet CSS anymore
 

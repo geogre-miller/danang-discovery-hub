@@ -105,7 +105,15 @@ export default function PlaceManagement() {
     }
   };
 
-  if (isLoading) return <div>Loading places...</div>;
+  if (isLoading) return (
+    <div className="flex items-center justify-center h-64">
+      <div className="relative">
+        <div className="animate-spin-smooth rounded-full h-10 w-10 border-4 border-muted-foreground/20 border-t-primary"></div>
+        <div className="absolute inset-0 rounded-full h-10 w-10 border-4 border-transparent border-r-primary/30 animate-spin-reverse"></div>
+      </div>
+      <span className="ml-3 text-muted-foreground">Loading places...</span>
+    </div>
+  );
   if (error) return <div>Error loading places: {error.message}</div>;
 
   return (
