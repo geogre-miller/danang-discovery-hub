@@ -165,7 +165,10 @@ export default function PlaceDetails() {
         <div className="rounded-xl border overflow-hidden h-80">
           <Suspense fallback={
             <div className="flex items-center justify-center h-80 w-full bg-muted">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <div className="relative">
+                <div className="animate-spin-smooth rounded-full h-10 w-10 border-4 border-muted-foreground/20 border-t-primary"></div>
+                <div className="absolute inset-0 rounded-full h-10 w-10 border-4 border-transparent border-r-primary/30 animate-spin-reverse"></div>
+              </div>
             </div>
           }>
             <MapView center={[coords.lat, coords.lng]} label={place.name} className="h-80 w-full" />
