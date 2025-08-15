@@ -11,6 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from '@/components/ui/badge';
 import { Pencil, Trash2, Plus } from 'lucide-react';
 import { toast } from 'sonner';
+import GeoapifyAutocomplete from '@/components/common/GeoapifyAutocomplete';
+import type { PlaceAutocompleteResult } from '@/services/geoapify.service';
 
 export default function PlaceManagement() {
   const { data: places, isLoading, error } = usePlaces();
@@ -25,7 +27,9 @@ export default function PlaceManagement() {
     name: '',
     address: '',
     category: '',
-    imageUrl: ''
+    imageUrl: '',
+    coordinates: undefined,
+    formattedAddress: undefined
   });
 
   const resetForm = () => {
@@ -33,8 +37,21 @@ export default function PlaceManagement() {
       name: '',
       address: '',
       category: '',
-      imageUrl: ''
+      imageUrl: '',
+      coordinates: undefined,
+      formattedAddress: undefined
     });
+  };
+
+  // Handle Geoapify Places selection
+  const handlePlaceSelect = (place: PlaceAutocompleteResult) => {
+    setFormData(prev => ({
+      ...prev,
+      name: prev.name || place.name, // Only set if name is empty
+      address: place.address,
+      formattedAddress: place.formattedAddress,
+      coordinates: place.coordinates
+    }));
   };
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -54,7 +71,9 @@ export default function PlaceManagement() {
       name: place.name,
       address: place.address,
       category: place.category,
-      imageUrl: place.imageUrl || ''
+      imageUrl: place.imageUrl || '',
+      coordinates: place.coordinates,
+      formattedAddress: place.formattedAddress
     });
     setIsEditDialogOpen(true);
   };
@@ -116,11 +135,12 @@ export default function PlaceManagement() {
               </div>
               <div>
                 <Label htmlFor="address">Address</Label>
-                <Input
-                  id="address"
+                <GeoapifyAutocomplete
                   value={formData.address}
-                  onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
-                  required
+                  onPlaceSelect={handlePlaceSelect}
+                  placeholder="Search for restaurants, cafes, bars..."
+                  showCurrentLocation={true}
+                  bias="countrycode:vn"
                 />
               </div>
               <div>
@@ -222,12 +242,13 @@ export default function PlaceManagement() {
               />
             </div>
             <div>
-              <Label htmlFor="edit-address">Address</Label>
-              <Input
-                id="edit-address"
+              <Label htmlFor="address">Address</Label>
+              <GeoapifyAutocomplete
                 value={formData.address}
-                onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
-                required
+                onPlaceSelect={handlePlaceSelect}
+                placeholder="Search for restaurants, cafes, bars..."
+                showCurrentLocation={true}
+                bias="countrycode:vn"
               />
             </div>
             <div>

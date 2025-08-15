@@ -9,6 +9,11 @@ export interface Place {
   imageUrl?: string;
   userLiked?: boolean;
   userDisliked?: boolean;
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
+  formattedAddress?: string;
 }
 
 export interface PlacesResponse {
@@ -26,6 +31,11 @@ export interface CreatePlaceRequest {
   address: string;
   category: string;
   imageUrl?: string;
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
+  formattedAddress?: string;
 }
 
 export interface UpdatePlaceRequest {
@@ -33,6 +43,11 @@ export interface UpdatePlaceRequest {
   address?: string;
   category?: string;
   imageUrl?: string;
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
+  formattedAddress?: string;
 }
 
 export interface PlaceFilters {

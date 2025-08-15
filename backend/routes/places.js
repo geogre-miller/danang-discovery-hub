@@ -68,7 +68,7 @@ router.get("/", optionalAuth, async (req, res) => {
 // @access  Public
 router.post("/", async (req, res) => {
   try {
-    const { name, address, category, imageUrl } = req.body;
+    const { name, address, category, imageUrl, coordinates, formattedAddress } = req.body;
 
     // Create new place instance
     const newPlace = new Place({
@@ -76,6 +76,8 @@ router.post("/", async (req, res) => {
       address,
       category,
       imageUrl,
+      coordinates,
+      formattedAddress,
     });
 
     // Save to database
@@ -126,7 +128,7 @@ router.get("/:id", async (req, res) => {
 // @access  Public
 router.put("/:id", async (req, res) => {
   try {
-    const { name, address, category, imageUrl } = req.body;
+    const { name, address, category, imageUrl, coordinates, formattedAddress } = req.body;
     const updateFields = {};
 
     // Only add fields that are provided
@@ -134,6 +136,8 @@ router.put("/:id", async (req, res) => {
     if (address) updateFields.address = address;
     if (category) updateFields.category = category;
     if (imageUrl) updateFields.imageUrl = imageUrl;
+    if (coordinates) updateFields.coordinates = coordinates;
+    if (formattedAddress) updateFields.formattedAddress = formattedAddress;
 
     const place = await Place.findByIdAndUpdate(
       req.params.id,

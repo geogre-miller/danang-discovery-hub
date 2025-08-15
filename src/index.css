@@ -96,3 +96,57 @@
   0%, 100% { transform: scale(1); opacity: 1; }
   50% { transform: scale(0.97); opacity: 0.9; }
 }
+
+/* Map Marker Styles - Ensure proper positioning and isolation */
+.map-marker {
+  box-sizing: border-box !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  background: none !important;
+  outline: none !important;
+  position: relative !important;
+  transform-origin: 50% 100% !important; /* Bottom center anchor */
+  backface-visibility: hidden !important;
+  -webkit-backface-visibility: hidden !important;
+  will-change: transform !important;
+}
+
+.map-marker svg {
+  display: block !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  background: none !important;
+  overflow: visible !important;
+  pointer-events: none !important;
+}
+
+.map-marker:hover {
+  z-index: 1000 !important;
+}
+
+/* MapTiler/MapLibre GL specific marker fixes */
+.maplibregl-marker {
+  /* Ensure markers stay in place during map operations */
+  will-change: transform !important;
+  transform-style: flat !important;
+}
+
+.maplibregl-marker .map-marker {
+  /* Reset any inherited transforms that could cause drift */
+  position: relative !important;
+  top: 0 !important;
+  left: 0 !important;
+  transform-origin: 50% 100% !important;
+}
+
+/* Prevent any CSS animations or transitions from interfering with marker positioning */
+.maplibregl-map .maplibregl-marker {
+  animation: none !important;
+}
+
+/* Ensure markers render above map elements but below UI */
+.maplibregl-canvas-container .maplibregl-marker {
+  z-index: 10 !important;
+}

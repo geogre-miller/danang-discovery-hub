@@ -1,73 +1,171 @@
-# Welcome to your Lovable project
+# Da Nang Discovery Hub
 
-## Project info
+A modern web application for discovering and managing places in Da Nang, Vietnam. Built with React, TypeScript, and featuring MapTiler and Geoapify integration for maps and location services.
 
-**URL**: https://lovable.dev/projects/f00a3baa-1566-427d-947c-e5073a127ecb
+## 🚀 Features
 
-## How can I edit this code?
+- **Place Discovery**: Browse and search through various places in Da Nang
+- **Interactive Maps**: View places on interactive MapTiler maps with category-based markers
+- **Smart Search**: Real-time place search with Geoapify autocomplete
+- **User Authentication**: Secure login and registration system
+- **Favorites System**: Save and manage your favorite places
+- **Admin Dashboard**: Comprehensive place management for administrators
+- **Responsive Design**: Optimized for both desktop and mobile devices
+- **Real-time Updates**: Like/dislike system with animated feedback
 
-There are several ways of editing your application.
+## 🛠️ Technologies
 
-**Use Lovable**
+- **Frontend**: React 18, TypeScript, Vite
+- **Styling**: Tailwind CSS, shadcn/ui components
+- **Maps**: MapTiler SDK for map display
+- **Location Services**: Geoapify for autocomplete and geocoding
+- **State Management**: React Query (TanStack Query)
+- **Animations**: Framer Motion
+- **Icons**: Lucide React
+- **Backend**: Node.js, Express, MongoDB
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/f00a3baa-1566-427d-947c-e5073a127ecb) and start prompting.
+## 🗺️ Maps & Location Integration
 
-Changes made via Lovable will be committed automatically to this repo.
+This project uses **MapTiler** for map display and **Geoapify** for location search:
 
-**Use your preferred IDE**
+### MapTiler Features
+- Interactive street maps
+- Category-based marker colors
+- Custom marker styling
+- Responsive map display
+- 100,000 free map loads/month
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Geoapify Features
+- Real-time place autocomplete
+- GPS location detection
+- Address formatting
+- Vietnam-focused search results
+- 3,000 free requests/day
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 📋 Prerequisites
 
-Follow these steps:
+- Node.js (v16 or higher)
+- npm or yarn package manager
+- MapTiler API key
+- Geoapify API key
 
+## 🔧 Installation
+
+1. **Clone the repository**
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
 git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
 cd <YOUR_PROJECT_NAME>
+```
 
-# Step 3: Install the necessary dependencies.
-npm i
+2. **Install dependencies**
+```sh
+npm install
+```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+3. **Set up environment variables**
+Create a `.env` file in the root directory:
+```bash
+VITE_MAPTILER_KEY=your_maptiler_api_key
+VITE_GEOAPIFY_KEY=your_geoapify_api_key
+```
+
+4. **Start the development server**
+```sh
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The application will be available at `http://localhost:8080`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## 🏗️ Build for Production
 
-**Use GitHub Codespaces**
+```sh
+npm run build
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+The built files will be in the `dist/` directory.
 
-## What technologies are used for this project?
+## 📁 Project Structure
 
-This project is built with:
+```
+src/
+├── components/          # Reusable UI components
+│   ├── admin/          # Admin-specific components
+│   ├── common/         # Common components (maps, cards, etc.)
+│   ├── layout/         # Layout components (header, navigation)
+│   └── ui/             # shadcn/ui components
+├── pages/              # Page components
+├── services/           # API services (auth, places, maps)
+├── hooks/              # Custom React hooks
+├── context/            # React context providers
+├── types/              # TypeScript type definitions
+└── lib/                # Utility functions
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## 🔑 API Keys Setup
 
-## How can I deploy this project?
+### MapTiler API Key
+1. Visit [MapTiler Cloud](https://cloud.maptiler.com/)
+2. Sign up for a free account
+3. Create a new API key
+4. Add it to your `.env` file as `VITE_MAPTILER_KEY`
 
-Simply open [Lovable](https://lovable.dev/projects/f00a3baa-1566-427d-947c-e5073a127ecb) and click on Share -> Publish.
+### Geoapify API Key
+1. Visit [Geoapify](https://www.geoapify.com/)
+2. Sign up for a free account
+3. Create a new API key
+4. Add it to your `.env` file as `VITE_GEOAPIFY_KEY`
 
-## Can I connect a custom domain to my Lovable project?
+## 🎨 Customization
 
-Yes, you can!
+### Map Styling
+Modify marker colors in `src/components/common/MapTilerView.tsx`:
+```typescript
+const getCategoryColor = (category?: string): string => {
+  const colors: Record<string, string> = {
+    'Coffee Shop': '#8B4513',
+    'Restaurant': '#FF6347',
+    // Add your custom colors here
+  };
+  return colors[category || ''] || '#e74c3c';
+};
+```
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+### Search Bias
+Configure search bias in Geoapify autocomplete components:
+```tsx
+<GeoapifyAutocomplete
+  bias="countrycode:vn" // Bias towards Vietnam
+  // other props...
+/>
+```
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+## 🔍 Available Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
+
+## 📖 Documentation
+
+- [MapTiler & Geoapify Integration Guide](./MAPTILER_GEOAPIFY_INTEGRATION.md)
+- [Animation Improvements](./ANIMATION_IMPROVEMENTS.md)
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+## 🙏 Acknowledgments
+
+- [MapTiler](https://maptiler.com/) for map services
+- [Geoapify](https://geoapify.com/) for location services
+- [shadcn/ui](https://ui.shadcn.com/) for UI components
+- [Lucide](https://lucide.dev/) for icons
