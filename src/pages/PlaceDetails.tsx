@@ -9,8 +9,9 @@ import { Badge } from '@/components/ui/badge';
 import { MapPin, Clock, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { getBestAddress } from '@/lib/address-utils';
-import { SimpleMapTilerView } from '@/components/common/MapTilerView';
-import MapView from '@/components/common/MapView';
+
+// Lazy load the map component for better performance
+const FastMapLibre = lazy(() => import('@/components/common/FastMapLibre'));
 
 // Note: No need to import leaflet CSS anymore
 
@@ -244,14 +245,26 @@ export default function PlaceDetails() {
         </div>
         
         <div className="rounded-xl border overflow-hidden">
-          <SimpleMapTilerView
-            center={coords}
-            title={place.name}
-            category={place.category}
-            zoom={16}
-            height="320px"
-            className="rounded-xl"
-          />
+          <Suspense 
+            fallback={
+              <div className="h-80 bg-muted rounded-xl animate-pulse flex items-center justify-center">
+                <div className="text-muted-foreground">Loading map...</div>
+              </div>
+            }
+          >
+            <FastMapLibre
+              center={[coords.lng, coords.lat]} // FastMapLibre expects [lng, lat]
+              zoom={16}
+              height="320px"
+              places={[place]}
+              selectedPlace={place}
+              showSearch={false}
+              showControls={true}
+              showPlaceMarkers={true}
+              interactive={true}
+              className="rounded-xl"
+            />
+          </Suspense>
         </div>
       </div>
     </div>

@@ -17,7 +17,8 @@ export const usePlaces = (filters?: PlaceFilters) => {
   return useQuery({
     queryKey: placeKeys.list(filters),
     queryFn: () => placesService.getAllPlaces(filters),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 1 * 60 * 1000, // 1 minute (reduced from 5 minutes)
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
   });
 };
 
@@ -35,7 +36,10 @@ export const useCreatePlace = () => {
   return useMutation({
     mutationFn: (data: CreatePlaceRequest) => placesService.createPlace(data),
     onSuccess: () => {
+      // Invalidate all place lists and force refetch
       queryClient.invalidateQueries({ queryKey: placeKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: placeKeys.all });
+      queryClient.refetchQueries({ queryKey: placeKeys.lists() });
       toast.success('Place created successfully!');
     },
     onError: (error: any) => {
@@ -51,8 +55,14 @@ export const useUpdatePlace = () => {
     mutationFn: ({ id, data }: { id: string; data: UpdatePlaceRequest }) => 
       placesService.updatePlace(id, data),
     onSuccess: (updatedPlace) => {
+      // Invalidate all place lists (with any filters)
       queryClient.invalidateQueries({ queryKey: placeKeys.lists() });
+      // Invalidate the specific place detail
       queryClient.invalidateQueries({ queryKey: placeKeys.detail(updatedPlace._id) });
+      // Also invalidate the general places query key to catch any edge cases
+      queryClient.invalidateQueries({ queryKey: placeKeys.all });
+      // Force refetch of all places data
+      queryClient.refetchQueries({ queryKey: placeKeys.lists() });
       toast.success('Place updated successfully!');
     },
     onError: (error: any) => {
