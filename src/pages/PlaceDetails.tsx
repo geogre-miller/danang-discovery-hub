@@ -1,18 +1,24 @@
 import { useMemo, Suspense, lazy } from 'react';
 import { useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import { motion } from 'framer-motion';
 import { usePlace, useLikePlace, useDislikePlace } from '@/hooks/use-places';
+import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, Clock, ThumbsUp, ThumbsDown } from 'lucide-react';
-import 'leaflet/dist/leaflet.css';
+import { toast } from 'sonner';
+import { getBestAddress } from '@/lib/address-utils';
 
-// Lazy load the MapView component
-const MapView = lazy(() => import('@/components/common/MapView'));
+// Lazy load the map component for better performance
+const FastMapLibre = lazy(() => import('@/components/common/FastMapLibre'));
+
+// Note: No need to import leaflet CSS anymore
 
 export default function PlaceDetails() {
   const { id } = useParams<{ id: string }>();
   const { data: place, isLoading, error } = usePlace(id!);
+  const { user } = useAuth();
   const likePlace = useLikePlace();
   const dislikePlace = useDislikePlace();
 
@@ -23,19 +29,29 @@ export default function PlaceDetails() {
 
   const handleLike = async () => {
     if (!place) return;
+    if (!user) {
+      toast.error('Please log in to like places');
+      return;
+    }
     try {
       await likePlace.mutateAsync(place._id);
-    } catch (error) {
-      // Error is handled in the mutation
+    } catch (error: any) {
+      const message = error?.response?.data?.message || 'Failed to like place';
+      toast.error(message);
     }
   };
 
   const handleDislike = async () => {
     if (!place) return;
+    if (!user) {
+      toast.error('Please log in to dislike places');
+      return;
+    }
     try {
       await dislikePlace.mutateAsync(place._id);
-    } catch (error) {
-      // Error is handled in the mutation
+    } catch (error: any) {
+      const message = error?.response?.data?.message || 'Failed to dislike place';
+      toast.error(message);
     }
   };
 
@@ -72,8 +88,20 @@ export default function PlaceDetails() {
     );
   }
 
-  // Default coordinates for Da Nang if not available
-  const coords = { lat: 16.0471, lng: 108.2068 };
+  // Use place coordinates if available and valid, otherwise use default Da Nang coordinates
+  const getValidCoordinates = () => {
+    if (place?.coordinates && 
+        typeof place.coordinates.lat === 'number' && 
+        typeof place.coordinates.lng === 'number' &&
+        !isNaN(place.coordinates.lat) && 
+        !isNaN(place.coordinates.lng)) {
+      return { lat: place.coordinates.lat, lng: place.coordinates.lng };
+    }
+    // Default Da Nang coordinates
+    return { lat: 16.0471, lng: 108.2068 };
+  };
+
+  const coords = getValidCoordinates();
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -87,7 +115,7 @@ export default function PlaceDetails() {
         <h1 className="font-display text-3xl mb-2">{place.name}</h1>
         <div className="flex items-center gap-2 text-muted-foreground mb-4">
           <MapPin size={18} />
-          <span>{place.address}</span>
+          <span>{getBestAddress(place)}</span>
         </div>
         
         <div className="flex items-center gap-4 mb-4">
@@ -101,27 +129,81 @@ export default function PlaceDetails() {
         </div>
         
         <div className="flex items-center gap-4">
-          <Button
-            variant="outline"
-            onClick={handleLike}
-            disabled={likePlace.isPending}
-            className="flex items-center gap-2"
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
           >
-            <ThumbsUp size={18} />
-            <span>{place.likes}</span>
-            <span className="text-muted-foreground">Likes</span>
-          </Button>
+            <Button
+              variant="outline"
+              onClick={handleLike}
+              disabled={likePlace.isPending || !user}
+              className={`flex items-center gap-2 transition-all duration-200 ${
+                place.userLiked 
+                  ? 'bg-green-500 border-green-200 text-green-700 hover:bg-green-100' 
+                  : 'hover:bg-green-200 hover:border-green-200/55'
+              }`}
+            >
+              <motion.div
+                animate={likePlace.isPending ? { 
+                  y: [0, -3, 0],
+                  transition: { duration: 0.5, repeat: Infinity }
+                } : place.userLiked ? { 
+                  rotate: [0, 15, -15, 0],
+                  scale: [1, 1.2, 1]
+                } : {}}
+                transition={{ duration: 0.4 }}
+              >
+                <ThumbsUp size={18} fill={place.userLiked ? 'currentColor' : 'none'} />
+              </motion.div>
+              <motion.span
+                animate={likePlace.isPending ? {
+                  scale: [1, 1.05, 1],
+                  transition: { duration: 0.3, repeat: Infinity }
+                } : {}}
+              >
+                {place.likes}
+              </motion.span>
+              <span className="text-muted-foreground">Likes</span>
+            </Button>
+          </motion.div>
           
-          <Button
-            variant="outline"
-            onClick={handleDislike}
-            disabled={dislikePlace.isPending}
-            className="flex items-center gap-2"
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
           >
-            <ThumbsDown size={18} />
-            <span>{place.dislikes}</span>
-            <span className="text-muted-foreground">Dislikes</span>
-          </Button>
+            <Button
+              variant="outline"
+              onClick={handleDislike}
+              disabled={dislikePlace.isPending || !user}
+              className={`flex items-center gap-2 transition-all duration-200 ${
+                place.userDisliked 
+                  ? 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100' 
+                  : 'hover:bg-red-50/50 hover:border-red-200/50'
+              }`}
+            >
+              <motion.div
+                animate={dislikePlace.isPending ? { 
+                  y: [0, 3, 0],
+                  transition: { duration: 0.5, repeat: Infinity }
+                } : place.userDisliked ? { 
+                  rotate: [0, -15, 15, 0],
+                  scale: [1, 1.2, 1]
+                } : {}}
+                transition={{ duration: 0.4 }}
+              >
+                <ThumbsDown size={18} fill={place.userDisliked ? 'currentColor' : 'none'} />
+              </motion.div>
+              <motion.span
+                animate={dislikePlace.isPending ? {
+                  scale: [1, 1.05, 1],
+                  transition: { duration: 0.3, repeat: Infinity }
+                } : {}}
+              >
+                {place.dislikes}
+              </motion.span>
+              <span className="text-muted-foreground">Dislikes</span>
+            </Button>
+          </motion.div>
         </div>
       </div>
 
@@ -162,16 +244,26 @@ export default function PlaceDetails() {
           </div>
         </div>
         
-        <div className="rounded-xl border overflow-hidden h-80">
-          <Suspense fallback={
-            <div className="flex items-center justify-center h-80 w-full bg-muted">
-              <div className="relative">
-                <div className="animate-spin-smooth rounded-full h-10 w-10 border-4 border-muted-foreground/20 border-t-primary"></div>
-                <div className="absolute inset-0 rounded-full h-10 w-10 border-4 border-transparent border-r-primary/30 animate-spin-reverse"></div>
+        <div className="rounded-xl border overflow-hidden">
+          <Suspense 
+            fallback={
+              <div className="h-80 bg-muted rounded-xl animate-pulse flex items-center justify-center">
+                <div className="text-muted-foreground">Loading map...</div>
               </div>
-            </div>
-          }>
-            <MapView center={[coords.lat, coords.lng]} label={place.name} className="h-80 w-full" />
+            }
+          >
+            <FastMapLibre
+              center={[coords.lng, coords.lat]} // FastMapLibre expects [lng, lat]
+              zoom={16}
+              height="320px"
+              places={[place]}
+              selectedPlace={place}
+              showSearch={false}
+              showControls={true}
+              showPlaceMarkers={true}
+              interactive={true}
+              className="rounded-xl"
+            />
           </Suspense>
         </div>
       </div>

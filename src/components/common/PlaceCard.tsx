@@ -5,6 +5,7 @@ import { useLikePlace, useDislikePlace } from '@/hooks/use-places';
 import { useAuth } from '@/context/AuthContext';
 import { useIsFavorite, useFavoriteToggle } from '@/hooks/use-favorites';
 import { toast } from 'sonner';
+import { getBestAddress } from '@/lib/address-utils';
 import type { Place } from '@/types/place';
 
 export default function PlaceCard({ place }: { place: Place }) {
@@ -79,7 +80,7 @@ export default function PlaceCard({ place }: { place: Place }) {
           <div className="flex-1">
             <h3 className="text-lg font-semibold leading-tight">{place.name}</h3>
             <p className="text-sm text-muted-foreground flex items-center gap-1">
-              <MapPin size={16} /> {place.address}
+              <MapPin size={16} /> {getBestAddress(place)}
             </p>
           </div>
           <motion.button
@@ -124,9 +125,12 @@ export default function PlaceCard({ place }: { place: Place }) {
               disabled={likePlace.isPending || !user}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              animate={place.userLiked ? { 
+              animate={likePlace.isPending ? { 
+                scale: [1, 1.1, 1],
+                transition: { duration: 0.6, repeat: Infinity }
+              } : place.userLiked ? { 
                 scale: [1, 1.2, 1],
-                rotate: [0, 5, -5, 0]
+                rotate: [0, 10, -10, 0]
               } : {}}
               transition={{ duration: 0.3, type: "spring", stiffness: 400 }}
               className={`flex items-center gap-1 text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
@@ -136,19 +140,26 @@ export default function PlaceCard({ place }: { place: Place }) {
               }`}
             >
               <motion.div
-                animate={place.userLiked ? { rotate: [0, 20, -20, 0] } : {}}
+                animate={likePlace.isPending ? { 
+                  y: [0, -2, 0],
+                  transition: { duration: 0.4, repeat: Infinity }
+                } : place.userLiked ? { 
+                  rotate: [0, 15, -15, 0],
+                  scale: [1, 1.2, 1]
+                } : {}}
                 transition={{ duration: 0.4 }}
               >
                 <ThumbsUp size={16} fill={place.userLiked ? 'currentColor' : 'none'} />
               </motion.div>
-              <span className="font-medium">{place.likes}</span>
-              {likePlace.isPending && (
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                  className="w-3 h-3 border border-current border-t-transparent rounded-full"
-                />
-              )}
+              <motion.span 
+                className="font-medium"
+                animate={likePlace.isPending ? {
+                  scale: [1, 1.05, 1],
+                  transition: { duration: 0.3, repeat: Infinity }
+                } : {}}
+              >
+                {place.likes}
+              </motion.span>
             </motion.button>
 
             <motion.button
@@ -156,9 +167,12 @@ export default function PlaceCard({ place }: { place: Place }) {
               disabled={dislikePlace.isPending || !user}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              animate={place.userDisliked ? { 
+              animate={dislikePlace.isPending ? { 
+                scale: [1, 1.1, 1],
+                transition: { duration: 0.6, repeat: Infinity }
+              } : place.userDisliked ? { 
                 scale: [1, 1.2, 1],
-                rotate: [0, -5, 5, 0]
+                rotate: [0, -10, 10, 0]
               } : {}}
               transition={{ duration: 0.3, type: "spring", stiffness: 400 }}
               className={`flex items-center gap-1 text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
@@ -168,19 +182,26 @@ export default function PlaceCard({ place }: { place: Place }) {
               }`}
             >
               <motion.div
-                animate={place.userDisliked ? { rotate: [0, -20, 20, 0] } : {}}
+                animate={dislikePlace.isPending ? { 
+                  y: [0, 2, 0],
+                  transition: { duration: 0.4, repeat: Infinity }
+                } : place.userDisliked ? { 
+                  rotate: [0, -15, 15, 0],
+                  scale: [1, 1.2, 1]
+                } : {}}
                 transition={{ duration: 0.4 }}
               >
                 <ThumbsDown size={16} fill={place.userDisliked ? 'currentColor' : 'none'} />
               </motion.div>
-              <span className="font-medium">{place.dislikes}</span>
-              {dislikePlace.isPending && (
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                  className="w-3 h-3 border border-current border-t-transparent rounded-full"
-                />
-              )}
+              <motion.span 
+                className="font-medium"
+                animate={dislikePlace.isPending ? {
+                  scale: [1, 1.05, 1],
+                  transition: { duration: 0.3, repeat: Infinity }
+                } : {}}
+              >
+                {place.dislikes}
+              </motion.span>
             </motion.button>
           </div>
         </div>

@@ -36,7 +36,6 @@ export default function Login() {
     try {
       await login({ email: vals.email, password: vals.password });
       toast({
-        
         title: "Welcome back! 🎉",
         description: "Enjoy exploring the best places in Da Nang!",
       });

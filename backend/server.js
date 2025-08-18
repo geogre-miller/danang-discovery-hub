@@ -5,6 +5,7 @@ const mongoose = require("mongoose");
 const passport = require("passport");
 const placesRoutes = require("./routes/places");
 const authRoutes = require("./routes/auth");
+const categoriesRoutes = require("./routes/categories");
 
 const app = express();
 app.use(express.json());
@@ -33,6 +34,7 @@ mongoose
 // ✅ Routes
 app.use("/places", placesRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/categories", categoriesRoutes);
 
 // ✅ Khởi chạy server
 const PORT = process.env.PORT || 5000;

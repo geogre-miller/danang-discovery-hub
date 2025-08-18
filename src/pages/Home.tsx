@@ -1,16 +1,20 @@
 import { useMemo, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { motion } from 'framer-motion';
-import { Search } from 'lucide-react';
+import { Search, RefreshCw } from 'lucide-react';
 import { usePlaces } from '@/hooks/use-places';
 import PlaceCard from '@/components/common/PlaceCard';
 import { PLACE_CATEGORIES } from '@/types/place';
+import { Button } from '@/components/ui/button';
+import { useQueryClient } from '@tanstack/react-query';
+import { placeKeys } from '@/hooks/use-places';
 
 export default function Home() {
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const queryClient = useQueryClient();
   
-  const { data: places, isLoading, error } = usePlaces({
+  const { data: places, isLoading, error, refetch, isFetching } = usePlaces({
     search: search || undefined,
     category: selectedCategory || undefined
   });
@@ -18,6 +22,12 @@ export default function Home() {
   const onSubmitSearch = (e: React.FormEvent) => {
     e.preventDefault();
     // The search will be handled by React Query automatically due to dependency change
+  };
+
+  const handleRefresh = async () => {
+    // Force refresh all places data
+    await queryClient.invalidateQueries({ queryKey: placeKeys.all });
+    await refetch();
   };
 
   const heroSubtitle = useMemo(() => 'Cafes, restaurants, and hidden gems in Da Nang', []);
@@ -59,7 +69,7 @@ export default function Home() {
               </button>
             </div>
             
-            <div className="flex flex-wrap justify-center gap-2">
+            <div className="flex flex-wrap justify-center gap-2 items-center">
               <button
                 type="button"
                 onClick={() => setSelectedCategory('')}
@@ -77,6 +87,17 @@ export default function Home() {
                   {category}
                 </button>
               ))}
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefresh}
+                disabled={isLoading || isFetching}
+                className="ml-4 gap-2"
+              >
+                <RefreshCw size={16} className={isLoading || isFetching ? 'animate-spin' : ''} />
+                {isFetching ? 'Refreshing...' : 'Refresh'}
+              </Button>
             </div>
           </form>
         </motion.div>
