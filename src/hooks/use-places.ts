@@ -91,12 +91,66 @@ export const useLikePlace = () => {
   
   return useMutation({
     mutationFn: (id: string) => placesService.likePlace(id),
-    onSuccess: (updatedPlace) => {
-      queryClient.invalidateQueries({ queryKey: placeKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: placeKeys.detail(updatedPlace._id) });
+    onMutate: async (placeId) => {
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      await queryClient.cancelQueries({ queryKey: placeKeys.all });
+
+      // Snapshot the previous value
+      const previousPlaces = queryClient.getQueryData(placeKeys.lists());
+      const previousPlace = queryClient.getQueryData(placeKeys.detail(placeId));
+
+      // Optimistically update the cache
+      queryClient.setQueriesData({ queryKey: placeKeys.lists() }, (old: any) => {
+        if (!old?.length) return old;
+        return old.map((place: Place) => 
+          place._id === placeId 
+            ? { 
+                ...place, 
+                likes: place.userLiked ? place.likes - 1 : place.likes + 1,
+                dislikes: place.userDisliked ? place.dislikes - 1 : place.dislikes,
+                userLiked: !place.userLiked,
+                userDisliked: false
+              }
+            : place
+        );
+      });
+
+      queryClient.setQueryData(placeKeys.detail(placeId), (old: Place | undefined) => {
+        if (!old) return old;
+        return {
+          ...old,
+          likes: old.userLiked ? old.likes - 1 : old.likes + 1,
+          dislikes: old.userDisliked ? old.dislikes - 1 : old.dislikes,
+          userLiked: !old.userLiked,
+          userDisliked: false
+        };
+      });
+
+      // Return a context object with the snapshotted values
+      return { previousPlaces, previousPlace, placeId };
     },
-    onError: (error: any) => {
-      toast.error(error?.response?.data?.message || 'Failed to like place');
+    onError: (err, placeId, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      if (context?.previousPlaces) {
+        queryClient.setQueryData(placeKeys.lists(), context.previousPlaces);
+      }
+      if (context?.previousPlace) {
+        queryClient.setQueryData(placeKeys.detail(placeId), context.previousPlace);
+      }
+      toast.error('Failed to like place');
+    },
+    onSettled: (data, error, placeId) => {
+      // Always refetch after error or success to ensure we have the latest data
+      if (data) {
+        queryClient.setQueryData(placeKeys.detail(placeId), data);
+        // Update places list with the server response
+        queryClient.setQueriesData({ queryKey: placeKeys.lists() }, (old: any) => {
+          if (!old?.length) return old;
+          return old.map((place: Place) => 
+            place._id === placeId ? data : place
+          );
+        });
+      }
     },
   });
 };
@@ -106,12 +160,66 @@ export const useDislikePlace = () => {
   
   return useMutation({
     mutationFn: (id: string) => placesService.dislikePlace(id),
-    onSuccess: (updatedPlace) => {
-      queryClient.invalidateQueries({ queryKey: placeKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: placeKeys.detail(updatedPlace._id) });
+    onMutate: async (placeId) => {
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      await queryClient.cancelQueries({ queryKey: placeKeys.all });
+
+      // Snapshot the previous value
+      const previousPlaces = queryClient.getQueryData(placeKeys.lists());
+      const previousPlace = queryClient.getQueryData(placeKeys.detail(placeId));
+
+      // Optimistically update the cache
+      queryClient.setQueriesData({ queryKey: placeKeys.lists() }, (old: any) => {
+        if (!old?.length) return old;
+        return old.map((place: Place) => 
+          place._id === placeId 
+            ? { 
+                ...place, 
+                dislikes: place.userDisliked ? place.dislikes - 1 : place.dislikes + 1,
+                likes: place.userLiked ? place.likes - 1 : place.likes,
+                userDisliked: !place.userDisliked,
+                userLiked: false
+              }
+            : place
+        );
+      });
+
+      queryClient.setQueryData(placeKeys.detail(placeId), (old: Place | undefined) => {
+        if (!old) return old;
+        return {
+          ...old,
+          dislikes: old.userDisliked ? old.dislikes - 1 : old.dislikes + 1,
+          likes: old.userLiked ? old.likes - 1 : old.likes,
+          userDisliked: !old.userDisliked,
+          userLiked: false
+        };
+      });
+
+      // Return a context object with the snapshotted values
+      return { previousPlaces, previousPlace, placeId };
     },
-    onError: (error: any) => {
-      toast.error(error?.response?.data?.message || 'Failed to dislike place');
+    onError: (err, placeId, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      if (context?.previousPlaces) {
+        queryClient.setQueryData(placeKeys.lists(), context.previousPlaces);
+      }
+      if (context?.previousPlace) {
+        queryClient.setQueryData(placeKeys.detail(placeId), context.previousPlace);
+      }
+      toast.error('Failed to dislike place');
+    },
+    onSettled: (data, error, placeId) => {
+      // Always refetch after error or success to ensure we have the latest data
+      if (data) {
+        queryClient.setQueryData(placeKeys.detail(placeId), data);
+        // Update places list with the server response
+        queryClient.setQueriesData({ queryKey: placeKeys.lists() }, (old: any) => {
+          if (!old?.length) return old;
+          return old.map((place: Place) => 
+            place._id === placeId ? data : place
+          );
+        });
+      }
     },
   });
 };

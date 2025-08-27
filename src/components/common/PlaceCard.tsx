@@ -1,11 +1,13 @@
 import { motion } from 'framer-motion';
-import { Heart, MapPin, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Heart, MapPin, Clock, Circle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useLikePlace, useDislikePlace } from '@/hooks/use-places';
 import { useAuth } from '@/context/AuthContext';
 import { useIsFavorite, useFavoriteToggle } from '@/hooks/use-favorites';
 import { toast } from 'sonner';
 import { getBestAddress } from '@/lib/address-utils';
+import { getCompactHours, isPlaceOpen } from '@/lib/hours-utils';
+import { AnimatedActionButton } from '@/components/ui/AnimatedActionButton';
 import type { Place } from '@/types/place';
 
 export default function PlaceCard({ place }: { place: Place }) {
@@ -16,6 +18,8 @@ export default function PlaceCard({ place }: { place: Place }) {
   const dislikePlace = useDislikePlace();
   
   const img = place.imageUrl || '/placeholder.svg';
+  const isOpen = isPlaceOpen(place.openingHours);
+  const hoursDisplay = place.openingHours ? getCompactHours(place.openingHours) : place.time;
   
   const handleLike = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -38,6 +42,35 @@ export default function PlaceCard({ place }: { place: Place }) {
     e.preventDefault();
     e.stopPropagation();
     
+    if (!user) {
+      toast.error('Please log in to dislike places');
+      return;
+    }
+    
+    try {
+      await dislikePlace.mutateAsync(place._id);
+    } catch (error: any) {
+      const message = error?.response?.data?.message || 'Failed to dislike place';
+      toast.error(message);
+    }
+  };
+
+  // Handlers for AnimatedActionButton (no event parameter)
+  const handleLikeClick = async () => {
+    if (!user) {
+      toast.error('Please log in to like places');
+      return;
+    }
+    
+    try {
+      await likePlace.mutateAsync(place._id);
+    } catch (error: any) {
+      const message = error?.response?.data?.message || 'Failed to like place';
+      toast.error(message);
+    }
+  };
+
+  const handleDislikeClick = async () => {
     if (!user) {
       toast.error('Please log in to dislike places');
       return;
@@ -120,95 +153,51 @@ export default function PlaceCard({ place }: { place: Place }) {
           </div>
           
           <div className="flex items-center gap-3">
-            <motion.button
-              onClick={handleLike}
-              disabled={likePlace.isPending || !user}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              animate={likePlace.isPending ? { 
-                scale: [1, 1.1, 1],
-                transition: { duration: 0.6, repeat: Infinity }
-              } : place.userLiked ? { 
-                scale: [1, 1.2, 1],
-                rotate: [0, 10, -10, 0]
-              } : {}}
-              transition={{ duration: 0.3, type: "spring", stiffness: 400 }}
-              className={`flex items-center gap-1 text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
-                place.userLiked 
-                  ? 'text-green-700 bg-green-50 px-2 py-1 rounded-md shadow-sm border border-green-200' 
-                  : 'text-green-600 hover:text-green-700 hover:bg-green-50/50 px-2 py-1 rounded-md'
-              }`}
-            >
-              <motion.div
-                animate={likePlace.isPending ? { 
-                  y: [0, -2, 0],
-                  transition: { duration: 0.4, repeat: Infinity }
-                } : place.userLiked ? { 
-                  rotate: [0, 15, -15, 0],
-                  scale: [1, 1.2, 1]
-                } : {}}
-                transition={{ duration: 0.4 }}
-              >
-                <ThumbsUp size={16} fill={place.userLiked ? 'currentColor' : 'none'} />
-              </motion.div>
-              <motion.span 
-                className="font-medium"
-                animate={likePlace.isPending ? {
-                  scale: [1, 1.05, 1],
-                  transition: { duration: 0.3, repeat: Infinity }
-                } : {}}
-              >
-                {place.likes}
-              </motion.span>
-            </motion.button>
+            <AnimatedActionButton
+              variant="like"
+              isActive={place.userLiked}
+              count={place.likes}
+              isPending={likePlace.isPending}
+              disabled={!user}
+              onClick={handleLikeClick}
+              className="text-xs"
+              showLabel={false}
+              aria-label={`Like ${place.name}`}
+              aria-pressed={place.userLiked}
+            />
 
-            <motion.button
-              onClick={handleDislike}
-              disabled={dislikePlace.isPending || !user}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              animate={dislikePlace.isPending ? { 
-                scale: [1, 1.1, 1],
-                transition: { duration: 0.6, repeat: Infinity }
-              } : place.userDisliked ? { 
-                scale: [1, 1.2, 1],
-                rotate: [0, -10, 10, 0]
-              } : {}}
-              transition={{ duration: 0.3, type: "spring", stiffness: 400 }}
-              className={`flex items-center gap-1 text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
-                place.userDisliked 
-                  ? 'text-red-700 bg-red-50 px-2 py-1 rounded-md shadow-sm border border-red-200' 
-                  : 'text-red-600 hover:text-red-700 hover:bg-red-50/50 px-2 py-1 rounded-md'
-              }`}
-            >
-              <motion.div
-                animate={dislikePlace.isPending ? { 
-                  y: [0, 2, 0],
-                  transition: { duration: 0.4, repeat: Infinity }
-                } : place.userDisliked ? { 
-                  rotate: [0, -15, 15, 0],
-                  scale: [1, 1.2, 1]
-                } : {}}
-                transition={{ duration: 0.4 }}
-              >
-                <ThumbsDown size={16} fill={place.userDisliked ? 'currentColor' : 'none'} />
-              </motion.div>
-              <motion.span 
-                className="font-medium"
-                animate={dislikePlace.isPending ? {
-                  scale: [1, 1.05, 1],
-                  transition: { duration: 0.3, repeat: Infinity }
-                } : {}}
-              >
-                {place.dislikes}
-              </motion.span>
-            </motion.button>
+            <AnimatedActionButton
+              variant="dislike"
+              isActive={place.userDisliked}
+              count={place.dislikes}
+              isPending={dislikePlace.isPending}
+              disabled={!user}
+              onClick={handleDislikeClick}
+              className="text-xs"
+              showLabel={false}
+              aria-label={`Dislike ${place.name}`}
+              aria-pressed={place.userDisliked}
+            />
           </div>
         </div>
         
-        {place.time && (
-          <div className="text-xs text-muted-foreground">
-            Hours: {place.time}
+        {hoursDisplay && (
+          <div className="text-xs text-muted-foreground space-y-1">
+            <div className="flex items-center gap-1">
+              <Clock size={14} />
+              <span>{place.openingHours ? getCompactHours(place.openingHours).split(' • ')[0] : place.time}</span>
+              {place.openingHours && (
+                <Circle 
+                  size={8} 
+                  className={`ml-1 ${isOpen ? 'text-green-500 fill-current' : 'text-red-500 fill-current'}`}
+                />
+              )}
+            </div>
+            {place.openingHours && getCompactHours(place.openingHours).includes(' • ') && (
+              <div className="text-xs text-muted-foreground ml-[18px]">
+                {getCompactHours(place.openingHours).split(' • ')[1]}
+              </div>
+            )}
           </div>
         )}
       </div>

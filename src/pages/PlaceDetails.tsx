@@ -6,9 +6,11 @@ import { usePlace, useLikePlace, useDislikePlace } from '@/hooks/use-places';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Clock, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { MapPin, Clock, Circle } from 'lucide-react';
 import { toast } from 'sonner';
 import { getBestAddress } from '@/lib/address-utils';
+import { getWeeklySchedule, isPlaceOpen, getTodayHours, getDaysPattern } from '@/lib/hours-utils';
+import { AnimatedActionButton } from '@/components/ui/AnimatedActionButton';
 
 // Lazy load the map component for better performance
 const FastMapLibre = lazy(() => import('@/components/common/FastMapLibre'));
@@ -22,9 +24,63 @@ export default function PlaceDetails() {
   const likePlace = useLikePlace();
   const dislikePlace = useDislikePlace();
 
+  // All hooks must be called before any early returns
   const title = useMemo(() => 
     place?.name ? `${place.name} — Details` : 'Place Details', 
     [place?.name]
+  );
+
+  // Use place coordinates if available and valid, otherwise use default Da Nang coordinates
+  const coords = useMemo(() => {
+    if (place?.coordinates && 
+        typeof place.coordinates.lat === 'number' && 
+        typeof place.coordinates.lng === 'number' &&
+        !isNaN(place.coordinates.lat) && 
+        !isNaN(place.coordinates.lng)) {
+      return { lat: place.coordinates.lat, lng: place.coordinates.lng };
+    }
+    // Default Da Nang coordinates
+    return { lat: 16.0471, lng: 108.2068 };
+  }, [place?.coordinates?.lat, place?.coordinates?.lng]);
+
+  // Create stable place object for map (excluding mutable data like likes/dislikes)
+  const stablePlace = useMemo(() => {
+    if (!place) return null;
+    return {
+      _id: place._id,
+      name: place.name,
+      address: place.address,
+      category: place.category,
+      coordinates: place.coordinates,
+      imageUrl: place.imageUrl,
+      time: place.time,
+      openingHours: place.openingHours,
+      // Exclude likes, dislikes, userLiked, userDisliked to prevent map re-renders
+      likes: 0,
+      dislikes: 0,
+      userLiked: false,
+      userDisliked: false
+    };
+  }, [place?._id, place?.name, place?.address, place?.category, place?.coordinates, place?.imageUrl, place?.time, place?.openingHours]);
+
+  const weeklySchedule = useMemo(() => 
+    place ? getWeeklySchedule(place.openingHours) : [], 
+    [place?.openingHours]
+  );
+
+  const isOpen = useMemo(() => 
+    place ? isPlaceOpen(place.openingHours) : false, 
+    [place?.openingHours]
+  );
+
+  const todayHours = useMemo(() => 
+    place ? getTodayHours(place.openingHours) : null, 
+    [place?.openingHours]
+  );
+
+  const daysPattern = useMemo(() => 
+    place ? getDaysPattern(place.openingHours) : null, 
+    [place?.openingHours]
   );
 
   const handleLike = async () => {
@@ -88,21 +144,6 @@ export default function PlaceDetails() {
     );
   }
 
-  // Use place coordinates if available and valid, otherwise use default Da Nang coordinates
-  const getValidCoordinates = () => {
-    if (place?.coordinates && 
-        typeof place.coordinates.lat === 'number' && 
-        typeof place.coordinates.lng === 'number' &&
-        !isNaN(place.coordinates.lat) && 
-        !isNaN(place.coordinates.lng)) {
-      return { lat: place.coordinates.lat, lng: place.coordinates.lng };
-    }
-    // Default Da Nang coordinates
-    return { lat: 16.0471, lng: 108.2068 };
-  };
-
-  const coords = getValidCoordinates();
-
   return (
     <div className="container mx-auto px-4 py-8">
       <Helmet>
@@ -120,90 +161,47 @@ export default function PlaceDetails() {
         
         <div className="flex items-center gap-4 mb-4">
           <Badge variant="secondary">{place.category}</Badge>
-          {place.time && (
-            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+          {(place.openingHours || place.time) && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Clock size={16} />
-              <span>{place.time}</span>
+              <div className="flex flex-col">
+                <span>{place.openingHours ? todayHours?.split(' • ')[0] : place.time}</span>
+                {place.openingHours && daysPattern && (
+                  <span className="text-xs">{daysPattern}</span>
+                )}
+              </div>
+              {place.openingHours && (
+                <Circle 
+                  size={8} 
+                  className={`${isOpen ? 'text-green-500 fill-current' : 'text-red-500 fill-current'}`}
+                />
+              )}
             </div>
           )}
         </div>
         
         <div className="flex items-center gap-4">
-          <motion.div
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <Button
-              variant="outline"
-              onClick={handleLike}
-              disabled={likePlace.isPending || !user}
-              className={`flex items-center gap-2 transition-all duration-200 ${
-                place.userLiked 
-                  ? 'bg-green-500 border-green-200 text-green-700 hover:bg-green-100' 
-                  : 'hover:bg-green-200 hover:border-green-200/55'
-              }`}
-            >
-              <motion.div
-                animate={likePlace.isPending ? { 
-                  y: [0, -3, 0],
-                  transition: { duration: 0.5, repeat: Infinity }
-                } : place.userLiked ? { 
-                  rotate: [0, 15, -15, 0],
-                  scale: [1, 1.2, 1]
-                } : {}}
-                transition={{ duration: 0.4 }}
-              >
-                <ThumbsUp size={18} fill={place.userLiked ? 'currentColor' : 'none'} />
-              </motion.div>
-              <motion.span
-                animate={likePlace.isPending ? {
-                  scale: [1, 1.05, 1],
-                  transition: { duration: 0.3, repeat: Infinity }
-                } : {}}
-              >
-                {place.likes}
-              </motion.span>
-              <span className="text-muted-foreground">Likes</span>
-            </Button>
-          </motion.div>
+          <AnimatedActionButton
+            variant="like"
+            isActive={place.userLiked}
+            count={place.likes}
+            isPending={likePlace.isPending}
+            disabled={!user}
+            onClick={handleLike}
+            aria-label={`Like ${place.name}`}
+            aria-pressed={place.userLiked}
+          />
           
-          <motion.div
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <Button
-              variant="outline"
-              onClick={handleDislike}
-              disabled={dislikePlace.isPending || !user}
-              className={`flex items-center gap-2 transition-all duration-200 ${
-                place.userDisliked 
-                  ? 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100' 
-                  : 'hover:bg-red-50/50 hover:border-red-200/50'
-              }`}
-            >
-              <motion.div
-                animate={dislikePlace.isPending ? { 
-                  y: [0, 3, 0],
-                  transition: { duration: 0.5, repeat: Infinity }
-                } : place.userDisliked ? { 
-                  rotate: [0, -15, 15, 0],
-                  scale: [1, 1.2, 1]
-                } : {}}
-                transition={{ duration: 0.4 }}
-              >
-                <ThumbsDown size={18} fill={place.userDisliked ? 'currentColor' : 'none'} />
-              </motion.div>
-              <motion.span
-                animate={dislikePlace.isPending ? {
-                  scale: [1, 1.05, 1],
-                  transition: { duration: 0.3, repeat: Infinity }
-                } : {}}
-              >
-                {place.dislikes}
-              </motion.span>
-              <span className="text-muted-foreground">Dislikes</span>
-            </Button>
-          </motion.div>
+          <AnimatedActionButton
+            variant="dislike"
+            isActive={place.userDisliked}
+            count={place.dislikes}
+            isPending={dislikePlace.isPending}
+            disabled={!user}
+            onClick={handleDislike}
+            aria-label={`Dislike ${place.name}`}
+            aria-pressed={place.userDisliked}
+          />
         </div>
       </div>
 
@@ -222,24 +220,50 @@ export default function PlaceDetails() {
         <div className="space-y-6">
           <div className="rounded-xl border p-6">
             <h2 className="text-xl font-semibold mb-4">About this place</h2>
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div className="flex justify-between">
                 <span className="font-medium">Category:</span>
                 <Badge variant="secondary">{place.category}</Badge>
               </div>
-              {place.time && (
+              
+              {place.openingHours ? (
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">Opening Hours:</span>
+                    {isOpen !== null && (
+                      <span className={`text-xs px-2 py-1 rounded-full ${
+                        isOpen 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {isOpen ? 'Open Now' : 'Closed'}
+                      </span>
+                    )}
+                  </div>
+                  <div className="space-y-1 text-sm">
+                    {weeklySchedule.map(({ day, hours, isToday }) => (
+                      <div 
+                        key={day} 
+                        className={`flex justify-between py-1 px-2 rounded ${
+                          isToday ? 'bg-primary/10 font-medium' : ''
+                        }`}
+                      >
+                        <span>{day}:</span>
+                        <span className={hours === 'Closed' ? 'text-muted-foreground' : ''}>
+                          {hours}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : place.time ? (
                 <div className="flex justify-between">
                   <span className="font-medium">Hours:</span>
                   <span>{place.time}</span>
+                  <span></span>
                 </div>
-              )}
-              <div className="flex justify-between">
-                <span className="font-medium">Community Rating:</span>
-                <div className="flex gap-4">
-                  <span className="text-green-600">👍 {place.likes}</span>
-                  <span className="text-red-600">👎 {place.dislikes}</span>
-                </div>
-              </div>
+              ) : null}
+              
             </div>
           </div>
         </div>
@@ -256,8 +280,8 @@ export default function PlaceDetails() {
               center={[coords.lng, coords.lat]} // FastMapLibre expects [lng, lat]
               zoom={16}
               height="320px"
-              places={[place]}
-              selectedPlace={place}
+              places={stablePlace ? [stablePlace] : []}
+              selectedPlace={stablePlace}
               showSearch={false}
               showControls={true}
               showPlaceMarkers={true}

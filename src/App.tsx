@@ -9,6 +9,7 @@ import Header from "@/components/layout/Header";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { AuthProvider } from "@/context/AuthContext";
 import ScrollToTop from "@/components/common/ScrollToTop";
+import ClickSpark from "@/components/ui/block/Animations/ClickSpark/ClickSpark";
 
 // Lazy load pages for code splitting
 const Index = lazy(() => import("./pages/Index"));
@@ -44,10 +45,18 @@ const App = () => (
     <HelmetProvider>
       <AuthProvider>
         <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <ScrollToTop />
+          <ClickSpark
+            sparkColor="#3b82f6"
+            sparkSize={12}
+            sparkRadius={20}
+            sparkCount={8}
+            duration={500}
+            easing="ease-out"
+          >
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <ScrollToTop />
             <Header />
             <Suspense fallback={<PageLoader />}>
               <Routes>
@@ -85,10 +94,11 @@ const App = () => (
               </Routes>
             </Suspense>
           </BrowserRouter>
-        </TooltipProvider>
-      </AuthProvider>
-    </HelmetProvider>
-  </QueryClientProvider>
+        </ClickSpark>
+      </TooltipProvider>
+    </AuthProvider>
+  </HelmetProvider>
+</QueryClientProvider>
 );
 
 export default App;

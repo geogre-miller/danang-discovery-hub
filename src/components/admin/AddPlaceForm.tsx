@@ -82,8 +82,10 @@ export function AddPlaceForm({ onSuccess, onCancel }: AddPlaceFormProps) {
         imageUrl: formData.imageUrl,
         coordinates: formData.coordinates,
         formattedAddress: formData.formattedAddress || addressToUse,
-        // Convert opening hours to a time string (for compatibility with existing backend)
+        // Keep legacy time field for backward compatibility
         time: formatOpeningHoursForBackend(formData.openingHours),
+        // Send structured opening hours data
+        openingHours: formData.openingHours,
       };
 
       await createPlace.mutateAsync(placeData);
