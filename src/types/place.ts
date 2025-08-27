@@ -1,3 +1,9 @@
+export interface DayHours {
+  open: string;
+  close: string;
+  closed: boolean;
+}
+
 export interface Place {
   _id: string;
   name: string;
@@ -14,6 +20,9 @@ export interface Place {
     lng: number;
   };
   formattedAddress?: string;
+  openingHours?: {
+    [key: string]: DayHours;
+  };
 }
 
 export interface PlacesResponse {
@@ -36,6 +45,9 @@ export interface CreatePlaceRequest {
     lng: number;
   };
   formattedAddress?: string;
+  openingHours?: {
+    [key: string]: DayHours;
+  };
 }
 
 export interface UpdatePlaceRequest {
@@ -48,6 +60,9 @@ export interface UpdatePlaceRequest {
     lng: number;
   };
   formattedAddress?: string;
+  openingHours?: {
+    [key: string]: DayHours;
+  };
 }
 
 export interface PlaceFilters {

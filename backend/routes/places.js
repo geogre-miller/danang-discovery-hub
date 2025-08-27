@@ -68,7 +68,7 @@ router.get("/", optionalAuth, async (req, res) => {
 // @access  Public
 router.post("/", async (req, res) => {
   try {
-    const { name, address, category, imageUrl, coordinates, formattedAddress } = req.body;
+    const { name, address, category, imageUrl, coordinates, formattedAddress, time, openingHours } = req.body;
 
     // Create new place instance
     const newPlace = new Place({
@@ -78,6 +78,8 @@ router.post("/", async (req, res) => {
       imageUrl,
       coordinates,
       formattedAddress,
+      time,
+      openingHours,
     });
 
     // Save to database
@@ -128,7 +130,7 @@ router.get("/:id", async (req, res) => {
 // @access  Public
 router.put("/:id", async (req, res) => {
   try {
-    const { name, address, category, imageUrl, coordinates, formattedAddress } = req.body;
+    const { name, address, category, imageUrl, coordinates, formattedAddress, time, openingHours } = req.body;
     const updateFields = {};
 
     // Only add fields that are provided
@@ -138,6 +140,8 @@ router.put("/:id", async (req, res) => {
     if (imageUrl) updateFields.imageUrl = imageUrl;
     if (coordinates) updateFields.coordinates = coordinates;
     if (formattedAddress) updateFields.formattedAddress = formattedAddress;
+    if (time) updateFields.time = time;
+    if (openingHours) updateFields.openingHours = openingHours;
 
     const place = await Place.findByIdAndUpdate(
       req.params.id,
@@ -231,11 +235,18 @@ router.post("/:id/like", authenticate, async (req, res) => {
 
     await place.save();
 
+    // Create place object with user interaction status
+    const placeWithUserStatus = place.toObject();
+    placeWithUserStatus.userLiked = !alreadyLiked;
+    placeWithUserStatus.userDisliked = false;
+    
+    // Don't expose the likedBy and dislikedBy arrays to frontend
+    delete placeWithUserStatus.likedBy;
+    delete placeWithUserStatus.dislikedBy;
+
     res.json({
       success: true,
-      place,
-      userLiked: !alreadyLiked,
-      userDisliked: false,
+      place: placeWithUserStatus,
     });
   } catch (error) {
     console.error(error.message);
@@ -285,11 +296,18 @@ router.post("/:id/dislike", authenticate, async (req, res) => {
 
     await place.save();
 
+    // Create place object with user interaction status
+    const placeWithUserStatus = place.toObject();
+    placeWithUserStatus.userLiked = false;
+    placeWithUserStatus.userDisliked = !alreadyDisliked;
+    
+    // Don't expose the likedBy and dislikedBy arrays to frontend
+    delete placeWithUserStatus.likedBy;
+    delete placeWithUserStatus.dislikedBy;
+
     res.json({
       success: true,
-      place,
-      userLiked: false,
-      userDisliked: !alreadyDisliked,
+      place: placeWithUserStatus,
     });
   } catch (error) {
     console.error(error.message);

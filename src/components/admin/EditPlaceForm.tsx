@@ -34,7 +34,8 @@ export function EditPlaceForm({ place, onSuccess, onCancel }: EditPlaceFormProps
     imageUrl: place.imageUrl || '',
     coordinates: place.coordinates,
     formattedAddress: place.formattedAddress,
-    openingHours: parseOpeningHoursFromBackend(place.time) || DEFAULT_OPENING_HOURS,
+    // Use structured opening hours if available, otherwise parse from time string, otherwise use defaults
+    openingHours: place.openingHours || parseOpeningHoursFromBackend(place.time) || DEFAULT_OPENING_HOURS,
   });
   const [errors, setErrors] = useState<FormErrors>({});
 
@@ -78,8 +79,10 @@ export function EditPlaceForm({ place, onSuccess, onCancel }: EditPlaceFormProps
         imageUrl: formData.imageUrl,
         coordinates: formData.coordinates,
         formattedAddress: formData.formattedAddress || addressToUse,
-        // Convert opening hours to a time string (for compatibility with existing backend)
+        // Keep legacy time field for backward compatibility
         time: formatOpeningHoursForBackend(formData.openingHours),
+        // Send structured opening hours data
+        openingHours: formData.openingHours,
       };
 
       await updatePlace.mutateAsync({

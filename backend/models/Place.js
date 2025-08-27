@@ -14,6 +14,11 @@ const placeSchema = new mongoose.Schema({
     default: null
   },
   time: { type: String, default: "Hours not specified" },
+  // Structured opening hours data
+  openingHours: {
+    type: mongoose.Schema.Types.Mixed,
+    default: null
+  },
   likes: { type: Number, default: 0 },
   dislikes: { type: Number, default: 0 },
   imageUrl: { type: String },

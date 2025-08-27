@@ -151,10 +151,6 @@ export default function PlaceManagement() {
                   <p className="text-sm text-muted-foreground mb-2">
                     {place.address}
                   </p>
-                  <div className="flex justify-between text-sm">
-                    <span>👍 {place.likes}</span>
-                    <span>👎 {place.dislikes}</span>
-                  </div>
                 </CardContent>
               </Card>
             ))}

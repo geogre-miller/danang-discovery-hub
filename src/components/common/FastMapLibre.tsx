@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Button } from '@/components/ui/button';
@@ -712,4 +712,44 @@ const FastMapLibre: React.FC<FastMapLibreProps> = ({
     );
 };
 
-export default FastMapLibre;
+// Memoize the component to prevent unnecessary re-renders
+// Only re-render if key props change (not the place data like likes/dislikes)
+const MemoizedFastMapLibre = React.memo(FastMapLibre, (prevProps, nextProps) => {
+    // Helper function to safely compare coordinates
+    const coordsEqual = (coord1?: [number, number], coord2?: [number, number]) => {
+        if (!coord1 && !coord2) return true;
+        if (!coord1 || !coord2) return false;
+        return Math.abs(coord1[0] - coord2[0]) < 0.000001 && Math.abs(coord1[1] - coord2[1]) < 0.000001;
+    };
+
+    const placeCoordEqual = (place1?: { coordinates?: { lat: number; lng: number } }, place2?: { coordinates?: { lat: number; lng: number } }) => {
+        if (!place1?.coordinates && !place2?.coordinates) return true;
+        if (!place1?.coordinates || !place2?.coordinates) return false;
+        return Math.abs(place1.coordinates.lat - place2.coordinates.lat) < 0.000001 && 
+               Math.abs(place1.coordinates.lng - place2.coordinates.lng) < 0.000001;
+    };
+
+    // Only re-render if these specific props change
+    return (
+        coordsEqual(prevProps.center, nextProps.center) &&
+        prevProps.zoom === nextProps.zoom &&
+        prevProps.height === nextProps.height &&
+        prevProps.className === nextProps.className &&
+        prevProps.showSearch === nextProps.showSearch &&
+        prevProps.showControls === nextProps.showControls &&
+        prevProps.showPlaceMarkers === nextProps.showPlaceMarkers &&
+        prevProps.interactive === nextProps.interactive &&
+        // Only check place ID and coordinates, not mutable data like likes
+        prevProps.places?.length === nextProps.places?.length &&
+        prevProps.places?.every((place, index) => {
+            const nextPlace = nextProps.places?.[index];
+            return place._id === nextPlace?._id && placeCoordEqual(place, nextPlace);
+        }) &&
+        prevProps.selectedPlace?._id === nextProps.selectedPlace?._id &&
+        placeCoordEqual(prevProps.selectedPlace, nextProps.selectedPlace)
+    );
+});
+
+MemoizedFastMapLibre.displayName = 'FastMapLibre';
+
+export default MemoizedFastMapLibre;
